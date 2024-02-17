@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGOGenAI</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Inter var', sans-serif;
+            overflow: hidden; /* Hide scrollbars */
+            background: black; /* Set background to black */
+        }
+
+        /* Keyframes for floating animation */
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) scale(0.9); /* Start from the bottom of the screen */
+                opacity: 1;
+            }
+            75% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-150vh) scale(1.2); /* End point is 150% above the top of the screen */
+                opacity: 0;
+            }
+        }
+
+        /* Container for animated elements */
+        .floating-container {
+            position: fixed;
+            top: -50%; /* Start offscreen */
+            left: 0;
+            width: 100%;
+            height: 200%; /* Double the height to ensure coverage */
+            pointer-events: none; /* Allows clicks to pass through */
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .floating-element {
+            position: absolute;
+            bottom: -150px; /* Start below the screen */
+            background-color: rgba(255, 0, 0, 0.7); /* Semi-transparent red */
+            border-radius: 50%;
+            animation: float 10s linear infinite;
+        }
+
+
+        /* Sizes and positions of animated elements */
+        .floating-element:nth-child(1) { left: 25%; width: 80px; height: 80px; }
+        .floating-element:nth-child(2) { left: 10%; width: 150px; height: 150px; animation-delay: 4s; }
+        .floating-element:nth-child(3) { left: 50%; width: 100px; height: 100px; animation-delay: 2s; }
+        .floating-element:nth-child(4) { left: 70%; width: 120px; height: 120px; animation-delay: 6s; }
+        .floating-element:nth-child(5) { left: 80%; width: 60px; height: 60px; animation-delay: 8s; }
+        .floating-element:nth-child(6) { left: 5%; width: 110px; height: 110px; animation-delay: 9s; }
+        .floating-element:nth-child(7) { left: 60%; width: 25px; height: 25px; animation-delay: 13s; }
+        .floating-element:nth-child(8) { left: 10%; width: 60px; height: 60px; animation-delay: 15s; }
+        .floating-element:nth-child(9) { left: 80%; width: 70px; height: 70px; animation-delay: 14s; }
+        .floating-element:nth-child(10) { left: 20%; width: 25px; height: 25px; animation-delay: 0s; }
+        /* Add as many as you like */
+
+        /* Additional styles for hover effects and focus states */
+        input:focus, button:focus {
+            outline: 4px solid rgba(255, 0, 0, 0.5);
+            outline-offset: 2px;
+        }
+        button:hover {
+            background-color: #ff0000; /* Red color for hover state */
+        }
+    </style>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="floating-container">
+        <!-- You can add more .floating-element spans for additional particles -->
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    <img src="icl_logo-removebg-preview.png" alt="Intelligent Control Lab Logo" class="mb-8 w-32 h-auto" />
+    <div class="justify-center items-center h-screen z-10 relative">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-red-600 mb-4">Welcome to LEGOGenAI!</h1>
+            <div class="flex justify-center">
+                <input type="text" id="promptInput" class="rounded-l px-4 py-2 w-96" placeholder="Please Enter in a Prompt" style="background-color: #1a1a1a; color: #fff; border: 2px solid #ff0000;">
+                <button id="submitBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-r">
+                    Submit
+                </button>
+            </div>
+        </div>
+        <div id="promptDisplay" class="text-center mt-8 text-red-500"></div>
+        <img id="plotImage" src="" alt="Task Graph Visualization" style="max-width: 100%; height: auto;">
+    </div>
+
+    <!-- Front end script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('submitBtn').addEventListener('click', function() {
+                const prompt = document.getElementById('promptInput').value;
+                sendPrompt(prompt);
+                document.getElementById('promptInput').value = ''; // Clear the input field
+            });
+        });
+
+        async function sendPrompt(prompt) {
+            try {
+                // Sending the prompt to the submit_prompt endpoint
+                const submitResponse = await fetch('http://127.0.0.1:5000/submit_prompt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                if (submitResponse.ok) {
+                    const responseData = await submitResponse.json();
+                    console.log('Received response:', responseData);
+                    displayPrompts(responseData); // Display the message from the response
+
+                    // Check if folderName is provided in the response
+                    if (responseData.folderName) {
+                        // Correctly form the URL for the plot image request
+                        const plotImageUrl = `http://127.0.0.1:5000/plot/${responseData.folderName}.png`;
+                        // Set the src attribute of the img element to request the plot image
+                        document.getElementById('plotImage').src = plotImageUrl;
+                    } else {
+                        console.error('No folderName provided in the response.');
+                    }
+                } else {
+                    console.error('Server error:', submitResponse.statusText);
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+            }
+        }
+
+        // Function to update the display with the submitted prompts
+        function displayPrompts(response) {
+            const promptDisplay = document.getElementById('promptDisplay');
+            promptDisplay.textContent = response.message; // Display the message from the server
+        }
+    </script>
+</body>
+</html>
