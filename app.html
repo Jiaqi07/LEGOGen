@@ -12,11 +12,10 @@
             padding: 0;
             height: 100%;
             font-family: 'Inter var', sans-serif;
-            overflow: hidden; /* Hide scrollbars */
-            background: black; /* Set background to black */
+            overflow: hidden;
+            background: black;
         }
 
-        /* Keyframes for floating animation */
         @keyframes float {
             0% {
                 transform: translateY(100vh) scale(0.9); /* Start from the bottom of the screen */
@@ -51,7 +50,6 @@
             animation: float 10s linear infinite;
         }
 
-
         /* Sizes and positions of animated elements */
         .floating-element:nth-child(1) { left: 25%; width: 80px; height: 80px; }
         .floating-element:nth-child(2) { left: 10%; width: 150px; height: 150px; animation-delay: 4s; }
@@ -77,6 +75,7 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="floating-container">
         <!-- You can add more .floating-element spans for additional particles -->
@@ -115,7 +114,6 @@
 
         async function sendPrompt(prompt) {
             try {
-                // Sending the prompt to the submit_prompt endpoint
                 const submitResponse = await fetch('http://127.0.0.1:5000/submit_prompt', {
                     method: 'POST',
                     headers: {
@@ -126,18 +124,10 @@
 
                 if (submitResponse.ok) {
                     const responseData = await submitResponse.json();
+                    displayPrompts(responseData);
                     console.log('Received response:', responseData);
-                    displayPrompts(responseData); // Display the message from the response
-
-                    // Check if folderName is provided in the response
-                    if (responseData.folderName) {
-                        // Correctly form the URL for the plot image request
-                        const plotImageUrl = `http://127.0.0.1:5000/plot/${responseData.folderName}.png`;
-                        // Set the src attribute of the img element to request the plot image
-                        document.getElementById('plotImage').src = plotImageUrl;
-                    } else {
-                        console.error('No folderName provided in the response.');
-                    }
+                    // Update the following line to use responseData.folderName
+                    document.getElementById('plotImage').src = `http://127.0.0.1:5000/plot/${responseData.folderName}`; // Use folderName to set image src
                 } else {
                     console.error('Server error:', submitResponse.statusText);
                 }
